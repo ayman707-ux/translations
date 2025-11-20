@@ -9,14 +9,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Fix: Use Node to install the linter
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Install JSON Lint
-        run: sudo apt-get install -y jsonlint
+        run: npm install -g jsonlint
 
       - name: Check JSON Syntax
         run: |
           has_errors=0
+          # Loop through all .json files in the current directory
           for file in *.json; do
             echo "Checking $file..."
+            # -q is quiet mode, -c checks syntax
             if ! jsonlint -q "$file"; then
               echo "❌ Error in $file"
               has_errors=1
@@ -24,4 +32,8 @@ jobs:
               echo "✅ $file is valid"
             fi
           done
-          exit $has_errors
+          
+          if [ $has_errors -eq 1 ]; then
+            echo "⚠️ JSON syntax errors found. Please fix them."
+            exit 1
+          fi
